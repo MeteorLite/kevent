@@ -21,9 +21,8 @@ package org.rationalityfrontline.kevent
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
-import mu.KotlinLogging
+import meteor.Logger
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
@@ -165,7 +164,7 @@ class KEvent(
     var defaultThreadMode: SubscriberThreadMode = SubscriberThreadMode.POSTING,
 ) {
 
-    private val logger = KotlinLogging.logger { }
+    private val logger = Logger("EventBus")
 
     private val scope = CoroutineScope(Dispatchers.Default + CoroutineName("KEvent") + SupervisorJob())
 
@@ -181,7 +180,7 @@ class KEvent(
             eventChannel.consumeAsFlow().collect { event ->
                 val subscriberList = subscribersReadOnlyMap[event.type]
                 if (subscriberList == null || subscriberList.isEmpty()) {
-                    if (!event.isSticky) logger.warn { "No subscribers for event type \"${event.type.name}\"" }
+                    //if (!event.isSticky) logger.warn { "No subscribers for event type \"${event.type.name}\"" }
                 } else {
                     val e = if (event.isSticky) event.copy(isSticky = false) else event
 
@@ -207,7 +206,7 @@ class KEvent(
                             }
                         }
                         EventDispatchMode.POSTING -> {
-                            logger.error { "Failed to dispatch event \"$event\": unexpected dispatch mode in event channel (\"POSTING\")" }
+                            logger.error("Failed to dispatch event \"$event\": unexpected dispatch mode in event channel (\"POSTING\")")
                         }
                     }
                 }
@@ -225,12 +224,12 @@ class KEvent(
             SubscriberThreadMode.UI -> when (event.dispatchMode) {
                 EventDispatchMode.SEQUENTIAL -> Dispatchers.Main
                 else -> {
-                    logger.error { "Error happened when dispatching event \"$event\": subscriber thread mode \"UI\" is only compatible with dispatch mode \"SEQUENTIAL\"" }
+                    logger.error("Error happened when dispatching event \"$event\": subscriber thread mode \"UI\" is only compatible with dispatch mode \"SEQUENTIAL\"")
                     null
                 }
             }
             SubscriberThreadMode.POSTING -> {
-                logger.error { "Error happened when dispatching event \"$event\": subscriber thread mode \"POSTING\" is only compatible with dispatch mode \"POSTING\"" }
+                logger.error("Error happened when dispatching event \"$event\": subscriber thread mode \"POSTING\" is only compatible with dispatch mode \"POSTING\"")
                 null
             }
         }
@@ -240,7 +239,7 @@ class KEvent(
         try {
             subscriber.consumer(event)
         } catch (e: Exception) {
-            logger.error { "Exception happened when calling subscriber of event \"$event\"\n${e.stackTraceToString()}" }
+            logger.error("Exception happened when calling subscriber of event \"$event\"\n${e.stackTraceToString()}")
         }
     }
 
@@ -274,14 +273,14 @@ class KEvent(
         event as Event<Any>
         if (event.dispatchMode == EventDispatchMode.POSTING) {
             if (event.isSticky) {
-                logger.error { "Event with dispatch mode ${EventDispatchMode.POSTING} can't be sticky: $event" }
+                logger.error("Event with dispatch mode ${EventDispatchMode.POSTING} can't be sticky: $event")
                 return false
             }
             val subscriberList = subscribersReadOnlyMap[event.type]?.run {
                 filter { it.threadMode == SubscriberThreadMode.POSTING }
             }
             if (subscriberList == null || subscriberList.isEmpty()) {
-                logger.warn { "No subscribers for event type \"${event.type.name}\" with dispatch mode ${EventDispatchMode.POSTING}" }
+                //logger.warn { "No subscribers for event type \"${event.type.name}\" with dispatch mode ${EventDispatchMode.POSTING}" }
                 return false
             } else {
                 subscriberList.forEach { subscriber ->
@@ -382,7 +381,7 @@ class KEvent(
                 }
             }
         }
-        logger.warn { "Failed to add subscriber of event type \"$eventType\": Subscribers with same eventType and consumer can only be added once" }
+        logger.warn("Failed to add subscriber of event type \"$eventType\": Subscribers with same eventType and consumer can only be added once")
         return false
     }
 

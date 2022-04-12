@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-	kotlin("jvm") version "1.5.31"
+	kotlin("jvm") version "1.6.10"
     `java-library`
     `maven-publish`
     signing
@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "org.rationalityfrontline"
-version = "2.1.0"
+version = "2.1.3"
 val NAME = "kevent"
 val DESC = "A powerful in-process event dispatcher based on Kotlin and Coroutines"
 val GITHUB_REPO = "RationalityFrontline/kevent"
@@ -21,15 +21,14 @@ repositories {
 }
 
 dependencies {
-    val coroutinesVersion = "1.5.2"
+    val coroutinesVersion = "1.6.0"
     /** Kotlin --------------------------------------------------------- */
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutinesVersion")
     /** Logging -------------------------------------------------------- */
-    implementation("io.github.microutils:kotlin-logging:2.0.11")
-    val spekVersion = "2.0.17"
+    implementation("io.github.microutils:kotlin-logging:2.1.21")
+    val spekVersion = "2.0.18"
     /** Logging -------------------------------------------------------- */
-    testImplementation("org.slf4j:slf4j-simple:1.7.32")
-    testImplementation("com.github.doyaaaaaken:kotlin-csv-jvm:1.1.0")
+    testImplementation("com.github.doyaaaaaken:kotlin-csv-jvm:1.2.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test:${getKotlinPluginVersion()}")
     testImplementation("org.spekframework.spek2:spek-dsl-jvm:$spekVersion")
     testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:$spekVersion")
@@ -46,15 +45,6 @@ tasks {
     }
     withType(KotlinCompile::class.java) {
         kotlinOptions.jvmTarget = "11"
-    }
-    dokkaHtml {
-        outputDirectory.set(buildDir.resolve("javadoc"))
-        moduleName.set("KEvent")
-        dokkaSourceSets {
-            named("main") {
-                includes.from("module.md")
-            }
-        }
     }
     test {
         testLogging.showStandardStreams = true
@@ -87,57 +77,27 @@ tasks {
     }
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
-            artifact(tasks["sourcesJar"])
-            artifact(tasks["javadocJar"])
-            pom {
-                name.set(NAME)
-                description.set(DESC)
-                packaging = "jar"
-                url.set("https://github.com/$GITHUB_REPO")
-                licenses {
-                    license {
-                        name.set("The Apache Software License, Version 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                    }
-                }
-                developers {
-                    developer {
-                        name.set("RationalityFrontline")
-                        email.set("rationalityfrontline@gmail.com")
-                        organization.set("RationalityFrontline")
-                        organizationUrl.set("https://github.com/RationalityFrontline")
-                    }
-                }
-                scm {
-                    connection.set("scm:git:git://github.com/$GITHUB_REPO.git")
-                    developerConnection.set("scm:git:ssh://github.com:$GITHUB_REPO.git")
-                    url.set("https://github.com/$GITHUB_REPO/tree/master")
-                }
-            }
-        }
-    }
-    repositories {
-        fun env(propertyName: String): String {
-            return if (project.hasProperty(propertyName)) {
-                project.property(propertyName) as String
-            } else "Unknown"
-        }
-        maven {
-            val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-            val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots/")
-            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-            credentials {
-                username = env("ossrhUsername")
-                password = env("ossrhPassword")
-            }
-        }
+tasks.compileJava {
+    sourceCompatibility = JavaVersion.VERSION_1_8.toString()
+    targetCompatibility = JavaVersion.VERSION_1_8.toString()
+}
+
+tasks.compileKotlin {
+    sourceCompatibility = JavaVersion.VERSION_1_8.toString()
+    targetCompatibility = JavaVersion.VERSION_1_8.toString()
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+        apiVersion = "1.6"
+        languageVersion = "1.6"
     }
 }
 
-signing {
-    sign(publishing.publications["maven"])
+publishing {
+    publications {
+        create<MavenPublication>("mavenLocal") {
+            version = this.version
+            from(components["kotlin"])
+        }
+    }
 }
