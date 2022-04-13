@@ -3,15 +3,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
 	kotlin("jvm") version "1.6.10"
-    `java-library`
     `maven-publish`
-    signing
     id("org.jetbrains.dokka") version "1.5.30"
-    id("org.javamodularity.moduleplugin") version "1.8.8"
 }
 
 group = "org.rationalityfrontline"
-version = "2.1.3"
+version = "2.1.4"
 val NAME = "kevent"
 val DESC = "A powerful in-process event dispatcher based on Kotlin and Coroutines"
 val GITHUB_REPO = "RationalityFrontline/kevent"
@@ -21,7 +18,7 @@ repositories {
 }
 
 dependencies {
-    val coroutinesVersion = "1.6.0"
+    val coroutinesVersion = "1.6.1"
     /** Kotlin --------------------------------------------------------- */
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutinesVersion")
     /** Logging -------------------------------------------------------- */
@@ -40,12 +37,6 @@ sourceSets.main {
 }
 
 tasks {
-    withType(JavaCompile::class.java) {
-        options.release.set(11)
-    }
-    withType(KotlinCompile::class.java) {
-        kotlinOptions.jvmTarget = "11"
-    }
     test {
         testLogging.showStandardStreams = true
         useJUnitPlatform {
@@ -78,16 +69,16 @@ tasks {
 }
 
 tasks.compileJava {
-    sourceCompatibility = JavaVersion.VERSION_1_8.toString()
-    targetCompatibility = JavaVersion.VERSION_1_8.toString()
+    sourceCompatibility = JavaVersion.VERSION_17.toString()
+    targetCompatibility = JavaVersion.VERSION_17.toString()
 }
 
 tasks.compileKotlin {
-    sourceCompatibility = JavaVersion.VERSION_1_8.toString()
-    targetCompatibility = JavaVersion.VERSION_1_8.toString()
+    sourceCompatibility = JavaVersion.VERSION_17.toString()
+    targetCompatibility = JavaVersion.VERSION_17.toString()
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
         apiVersion = "1.6"
         languageVersion = "1.6"
     }
